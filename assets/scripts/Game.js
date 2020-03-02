@@ -50,6 +50,11 @@ cc.Class({
                       default: null,
                       type: cc.Label
                   },
+ // scoring sound effect resource
+        scoreAudio: {
+            default: null,
+            type: cc.AudioClip
+        },
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -57,6 +62,9 @@ cc.Class({
      onLoad () {
       // obtain the anchor point of ground level on the y axis
              this.groundY = this.ground.y + this.ground.height/2; // this.ground.top may also work
+              // initialize timer
+             this.timer = 0;
+             this.starDuration = 0;
              // generate a new star
              this.spawnNewStar();
              this.score=0;
@@ -67,6 +75,8 @@ cc.Class({
         this.score += 1;
         // update the words of the scoreDisplay Label
         this.scoreDisplay.string = 'Score: ' + this.score;
+       // play the scoring sound effect
+        cc.audioEngine.playEffect(this.scoreAudio, false);
     },
 
     spawnNewStar: function() {
@@ -79,6 +89,9 @@ cc.Class({
         newStar.setPosition(this.getNewStarPosition());
          // Staging a reference of Game object on a star component
         newStar.getComponent('Star').game = this;
+        // reset timer, randomly choose a value according the scale of star duration
+        this.starDuration = this.minStarDuration + Math.random() * (this.maxStarDuration - this.minStarDuration);
+        this.timer = 0;
     },
 
     getNewStarPosition: function () {
@@ -98,9 +111,22 @@ cc.Class({
         // return to the anchor point of the star
         return cc.v2(randX, randY);
     },
+    // Game.js
+     gameOver: function () {
+            this.player.stopAllActions(); //stop the jumping action of the player node
+            cc.director.loadScene('game');
+     },
     start () {
 
     },
 
-    // update (dt) {},
+     update (dt) {
+ // update timer for each frame, when a new star is not generated after exceeding duration
+        // invoke the logic of game failure
+        if (this.timer > this.starDuration) {
+            this.gameOver();
+            return;
+        }
+        this.timer += dt;
+     },
 });

@@ -31,6 +31,13 @@ cc.Class({
         jumpDuration: 0,
         maxMoveSpeed: 0,
         accel: 0,
+        // 辅助形变动作时间
+        squashDuration: 0,
+ // scoring sound effect resource
+        jumpAudio: {
+            default: null,
+            type: cc.AudioClip
+        },
     },
 
     // LIFE-CYCLE CALLBACKS:
@@ -55,10 +62,25 @@ cc.Class({
 
     },
     setJumpAction: function () {
-        var jumpUp = cc.moveBy(this.jumpDuration, cc.v2(0, this.jumpHeight)).easing(cc.easeCubicActionOut());
-        var jumpDown = cc.moveBy(this.jumpDuration, cc.v2(0, -this.jumpHeight)).easing(cc.easeCubicActionIn());
-        return cc.repeatForever(cc.sequence(jumpUp, jumpDown));
+      // 跳跃上升
+             var jumpUp = cc.moveBy(this.jumpDuration, cc.v2(0, this.jumpHeight)).easing(cc.easeCubicActionOut());
+             // 下落
+             var jumpDown = cc.moveBy(this.jumpDuration, cc.v2(0, -this.jumpHeight)).easing(cc.easeCubicActionIn());
+             // 形变
+             var squash = cc.scaleTo(this.squashDuration, 1, 0.6);
+             var stretch = cc.scaleTo(this.squashDuration, 1, 1.2);
+             var scaleBack = cc.scaleTo(this.squashDuration, 1, 1);
+             // 添加一个回调函数，用于在动作结束时调用我们定义的其他方法
+             var callback = cc.callFunc(this.playJumpSound, this);
+             // 不断重复，而且每次完成落地动作后调用回调来播放声音
+             return cc.repeatForever(cc.sequence(squash, stretch, jumpUp, scaleBack, jumpDown, callback));
     },
+
+    playJumpSound: function () {
+        // 调用声音引擎播放声音
+        cc.audioEngine.playEffect(this.jumpAudio, false);
+    },
+
 	onKeyDown (event) {
         switch(event.keyCode) {
             case cc.macro.KEY.left:
